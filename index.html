@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CAST – Clinical Appointment Scheduling & Tracking with advanced features">
+  <meta name="keywords" content="healthcare, appointment, scheduler, clinical tracking">
+  <title>CAST · Pro Edition</title>
+  <!-- Preconnect & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap Icons & utilities -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- External stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+  <div id="offlineBanner">📡 You are offline. Some features may be limited.</div>
+  <div class="container-custom">
+    <!-- LOGIN -->
+    <div id="loginContainer">
+      <div class="card" style="max-width:440px; margin:3rem auto;">
+        <div class="flex-between">
+          <h2 style="display: flex; align-items: center; gap:0.5rem;"><i class="bi bi-shield-check" style="color:var(--primary);"></i> CAST Login</h2>
+          <button id="themeToggleLogin" class="btn btn-secondary btn-sm"><i class="bi bi-moon-stars"></i></button>
+        </div>
+        <form id="loginForm">
+          <div class="form-group"><label for="username">Username</label><input type="text" id="username" placeholder="e.g., admin" required minlength="3"></div>
+          <div class="form-group"><label for="password">Password</label><input type="password" id="password" placeholder="••••" required minlength="3"></div>
+          <div class="form-group"><button type="submit" class="btn"><i class="bi bi-box-arrow-in-right"></i> Sign in</button></div>
+          <div id="loginError" class="error-message"></div>
+          <p class="text-muted"><small>Demo: any credentials length ≥3</small></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appContainer" class="hidden">
+      <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap:1rem;">
+        <div style="display: flex; align-items: center; gap:1rem;">
+          <div style="background: var(--primary); padding:0.5rem; border-radius:50%;">
+            <i class="bi bi-calendar2-week" style="font-size:1.8rem; color:white;"></i>
+          </div>
+          <h1 style="font-size:1.8rem; font-weight:700; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">CAST · Pro</h1>
+        </div>
+        <div style="display: flex; gap:0.5rem; align-items:center;">
+          <span id="roleBadge" class="status" style="background:var(--info); color:#fff;">Admin</span>
+          <select id="roleSelect" aria-label="Switch role" class="btn btn-secondary btn-sm" style="width:auto;">
+            <option value="Admin">Admin</option>
+            <option value="Doctor">Doctor</option>
+            <option value="Receptionist">Receptionist</option>
+          </select>
+          <button id="themeToggleApp" class="btn btn-secondary btn-sm"><i class="bi bi-moon-stars"></i></button>
+          <button id="logoutBtn" class="btn btn-error btn-sm"><i class="bi bi-door-closed"></i> Logout</button>
+        </div>
+      </header>
+
+      <!-- Admin panel -->
+      <div id="adminPanel" class="card" style="margin-bottom:1.5rem;">
+        <h2 class="h5" style="display:flex; align-items:center; gap:0.5rem;"><i class="bi bi-gear"></i> Admin Tools</h2>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button id="exportCsvBtn" class="btn btn-secondary btn-sm"><i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV</button>
+          <button id="sampleReminderBtn" class="btn btn-secondary btn-sm"><i class="bi bi-bell"></i> Send test reminder</button>
+        </div>
+      </div>
+
+      <!-- Stats & Chart -->
+      <div style="display: flex; gap:1.5rem; flex-wrap:wrap; align-items:center;">
+        <div class="tracking-stats" style="flex:2;">
+          <div class="stat-card"><strong id="totalAppts">0</strong>Total</div>
+          <div class="stat-card"><strong id="scheduledAppts">0</strong>Scheduled</div>
+          <div class="stat-card"><strong id="completedAppts">0</strong>Completed</div>
+          <div class="stat-card"><strong id="cancelledAppts">0</strong>Cancelled</div>
+        </div>
+        <div class="chart-container" style="flex:1; min-width:200px;">
+          <canvas id="statsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div><label>Doctor</label><select id="filterDoctor"><option value="">All</option></select></div>
+        <div><label>Status</label><select id="filterStatus"><option value="">All</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+        <div><label>From</label><input type="date" id="filterDateFrom"></div>
+        <div><label>To</label><input type="date" id="filterDateTo"></div>
+        <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+          <button id="applyFilter" class="btn btn-secondary btn-sm">Apply</button>
+          <button id="clearFilter" class="btn btn-secondary btn-sm">Clear</button>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div style="display:grid; grid-template-columns:1fr 2fr; gap:1.8rem; margin-top:1.5rem;">
+        <!-- New appointment form -->
+        <section class="card" aria-labelledby="new-appt-heading">
+          <h2 id="new-appt-heading" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem;"><i class="bi bi-plus-circle" style="color:var(--primary);"></i> New appointment</h2>
+          <form id="appointmentForm">
+            <div class="form-group"><label for="patientName">Patient *</label><input type="text" id="patientName" placeholder="Full name" required minlength="2"></div>
+            <div class="form-group"><label for="doctorSelect">Doctor *</label><select id="doctorSelect" required><option value="">-- loading --</option></select><small id="doctorLoading" class="text-muted"><i class="bi bi-arrow-repeat"></i> loading...</small></div>
+            <div class="form-group"><label for="appointmentDate">Date *</label><input type="date" id="appointmentDate" required></div>
+            <div class="form-group"><label for="appointmentTime">Time *</label><input type="time" id="appointmentTime" required></div>
+            <div class="form-group"><label for="reason">Reason</label><textarea id="reason" rows="2" placeholder="Optional notes"></textarea></div>
+            <div class="form-group"><label for="status">Initial status</label><select id="status"><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+            <button type="submit" class="btn"><i class="bi bi-calendar-plus"></i> Schedule</button>
+            <div id="formError" class="error-message mt-2"></div>
+          </form>
+        </section>
+
+        <!-- Appointments list -->
+        <section class="card" aria-labelledby="appt-list-heading">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 id="appt-list-heading" style="display:flex; align-items:center; gap:0.5rem;"><i class="bi bi-list-check" style="color:var(--primary);"></i> Appointments</h2>
+            <div>
+              <button id="addSampleBtn" class="btn btn-secondary btn-sm"><i class="bi bi-file-earmark-plus"></i> Sample</button>
+              <button id="refreshAppointments" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-repeat"></i></button>
+            </div>
+          </div>
+          <div id="appointmentsList" class="appointments-grid" role="list" aria-label="Appointment cards"></div>
+          <!-- Weekly schedule table (detail) -->
+          <details class="mt-4" aria-label="Clinic schedule details">
+            <summary style="cursor:pointer; color:var(--primary); font-weight:600;"><i class="bi bi-table"></i> View weekly schedule (example table)</summary>
+            <table class="clinic-table" aria-label="Doctors' weekly hours">
+              <thead><tr><th>Doctor</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr></thead>
+              <tbody>
+                <tr><td>Dr. Smith</td><td>9-12</td><td>2-5</td><td>9-12</td><td>2-5</td><td>9-12</td></tr>
+                <tr><td>Dr. Johnson</td><td>2-5</td><td>9-12</td><td>2-5</td><td>9-12</td><td>-</td></tr>
+                <tr><td>Dr. Williams</td><td>9-12</td><td>9-12</td><td>2-5</td><td>9-12</td><td>2-5</td></tr>
+              </tbody>
+            </table>
+          </details>
+        </section>
+      </div>
+
+      <!-- Patient history modal -->
+      <div id="historyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-content">
+          <h3 id="modalTitle" style="display:flex; align-items:center; gap:0.5rem;"><i class="bi bi-clock-history"></i> Patient History</h3>
+          <div id="historyContent">Loading...</div>
+          <button id="closeModal" class="btn btn-secondary btn-sm mt-2">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- External JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
